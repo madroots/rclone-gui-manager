@@ -2,9 +2,9 @@ name: Build AppImage
 
 on:
   push:
-    branches: [ main ]
+    branches: [ testing ]
   pull_request:
-    branches: [ main ]
+    branches: [ testing ]
   release:
     types: [ created ]
 
@@ -36,39 +36,33 @@ jobs:
         chmod +x AppDir/usr/bin/rclone-gui-manager.py
         
         # Create launcher script
-        cat > AppDir/usr/bin/rclone-gui-manager << 'EOF'
-#!/bin/bash
-DIR="$(dirname "$(readlink -f "$0")")"
-export PYTHONPATH="$DIR/../lib/python3.8/site-packages:$PYTHONPATH"
-python3 "$DIR/rclone-gui-manager.py" "$@"
-EOF
+        echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
+        echo 'DIR="$(dirname "$(readlink -f "$0")")"' >> AppDir/usr/bin/rclone-gui-manager
+        echo 'export PYTHONPATH="$DIR/../lib/python3.8/site-packages:$PYTHONPATH"' >> AppDir/usr/bin/rclone-gui-manager
+        echo 'python3 "$DIR/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod +x AppDir/usr/bin/rclone-gui-manager
         
         # Create desktop file
-        cat > AppDir/usr/share/applications/rclone-gui-manager.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=Rclone GUI Manager
-Comment=Manage rclone remotes with a GUI
-Exec=rclone-gui-manager
-Icon=rclone-gui-manager
-Terminal=false
-Categories=Utility;FileTools;
-EOF
+        echo '[Desktop Entry]' > AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Type=Application' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Name=Rclone GUI Manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Comment=Manage rclone remotes with a GUI' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Exec=rclone-gui-manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Icon=rclone-gui-manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Terminal=false' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        echo 'Categories=Utility;FileTools;' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
         
         # Create symbolic link for desktop file
         ln -s usr/share/applications/rclone-gui-manager.desktop AppDir/rclone-gui-manager.desktop
         
-        # Create simple icon (using a standard icon for now)
+        # Copy icon
         cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/ 2>/dev/null || echo "No SVG icon found, will use default"
         
         # Create AppRun script
-        cat > AppDir/AppRun << 'EOF'
-#!/bin/bash
-HERE="$(dirname "$(readlink -f "$0")")"
-export PYTHONPATH="$HERE/usr/lib/python3.8/site-packages:$PYTHONPATH"
-exec "$HERE/usr/bin/rclone-gui-manager" "$@"
-EOF
+        echo '#!/bin/bash' > AppDir/AppRun
+        echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
+        echo 'export PYTHONPATH="$HERE/usr/lib/python3.8/site-packages:$PYTHONPATH"' >> AppDir/AppRun
+        echo 'exec "$HERE/usr/bin/rclone-gui-manager" "$@"' >> AppDir/AppRun
         chmod +x AppDir/AppRun
 
     - name: Download AppImageTool
@@ -103,14 +97,3 @@ EOF
       with:
         name: rclone-gui-manager-appimage
         path: rclone-gui-manager-x86_64.AppImage
-
-    - name: Upload AppImage to release
-      if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: rclone-gui-manager-x86_64.AppImage
-        asset_name: rclone-gui-manager-x86_64.AppImage
-        asset_content_type: application/octet-stream
