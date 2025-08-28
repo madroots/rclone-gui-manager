@@ -1,0 +1,116 @@
+name: Build AppImage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-tk python3-pip desktop-file-utils libfuse2
+    
+    - name: Install rclone
+      run: |
+        curl https://rclone.org/install.sh | sudo bash
+
+    - name: Create AppDir structure
+      run: |
+        # Create AppDir structure
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/lib
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        
+        # Copy application files
+        cp rclone-gui-manager.py AppDir/usr/bin/
+        chmod +x AppDir/usr/bin/rclone-gui-manager.py
+        
+        # Create launcher script
+        cat > AppDir/usr/bin/rclone-gui-manager << 'EOF'
+#!/bin/bash
+DIR="$(dirname "$(readlink -f "$0")")"
+export PYTHONPATH="$DIR/../lib/python3.8/site-packages:$PYTHONPATH"
+python3 "$DIR/rclone-gui-manager.py" "$@"
+EOF
+        chmod +x AppDir/usr/bin/rclone-gui-manager
+        
+        # Create desktop file
+        cat > AppDir/usr/share/applications/rclone-gui-manager.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=Rclone GUI Manager
+Comment=Manage rclone remotes with a GUI
+Exec=rclone-gui-manager
+Icon=rclone-gui-manager
+Terminal=false
+Categories=Utility;FileTools;
+EOF
+        
+        # Create symbolic link for desktop file
+        ln -s usr/share/applications/rclone-gui-manager.desktop AppDir/rclone-gui-manager.desktop
+        
+        # Create simple icon (using a standard icon for now)
+        cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/ 2>/dev/null || echo "No SVG icon found, will use default"
+        
+        # Create AppRun script
+        cat > AppDir/AppRun << 'EOF'
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "$0")")"
+export PYTHONPATH="$HERE/usr/lib/python3.8/site-packages:$PYTHONPATH"
+exec "$HERE/usr/bin/rclone-gui-manager" "$@"
+EOF
+        chmod +x AppDir/AppRun
+
+    - name: Download AppImageTool
+      run: |
+        wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage"
+        chmod +x appimagetool
+
+    - name: Create AppImage
+      run: |
+        # Try to create a simple icon if one doesn't exist
+        if [ ! -f "rclone-gui-manager.svg" ]; then
+          echo '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' > rclone-gui-manager.svg
+          echo '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">' >> rclone-gui-manager.svg
+          echo '<rect width="256" height="256" fill="#4CAF50"/>' >> rclone-gui-manager.svg
+          echo '<text x="128" y="140" font-family="Arial" font-size="40" fill="white" text-anchor="middle">RGM</text>' >> rclone-gui-manager.svg
+          echo '</svg>' >> rclone-gui-manager.svg
+          cp rclone-gui-manager.svg AppDir/
+        fi
+        
+        # Create the AppImage
+        ./appimagetool AppDir/
+        
+        # Rename AppImage with version info
+        if [ -f "Rclone_GUI_Manager-x86_64.AppImage" ]; then
+          mv Rclone_GUI_Manager-x86_64.AppImage rclone-gui-manager-x86_64.AppImage
+        elif [ -f "Rclone_GUI_Manager*.AppImage" ]; then
+          mv Rclone_GUI_Manager*.AppImage rclone-gui-manager-x86_64.AppImage
+        fi
+
+    - name: Upload AppImage as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: rclone-gui-manager-appimage
+        path: rclone-gui-manager-x86_64.AppImage
+
+    - name: Upload AppImage to release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: rclone-gui-manager-x86_64.AppImage
+        asset_name: rclone-gui-manager-x86_64.AppImage
+        asset_content_type: application/octet-stream

@@ -61,6 +61,10 @@ sudo pacman -S tk fuse util-linux
 
 ### 2. Install Rclone GUI Manager
 
+You can install Rclone GUI Manager in two ways:
+
+#### Option A: System-wide installation (traditional)
+
 Clone this repository and run the installation script:
 ```bash
 git clone https://github.com/yourusername/rclone-gui-manager.git
@@ -73,6 +77,16 @@ This will:
 - Install the application system-wide to `/usr/local/bin/`
 - Create a desktop entry for menu access
 - Set appropriate permissions
+
+#### Option B: Portable AppImage (recommended)
+
+Download the latest AppImage from [Releases](https://github.com/yourusername/rclone-gui-manager/releases) and make it executable:
+```bash
+chmod +x rclone-gui-manager-x86_64.AppImage
+./rclone-gui-manager-x86_64.AppImage
+```
+
+The AppImage includes all dependencies and can be run directly without installation.
 
 ### 3. Launch the Application
 
