@@ -18,10 +18,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y python3 python3-tk python3-pip desktop-file-utils libfuse2
-    
-    - name: Install rclone
-      run: |
-        curl https://rclone.org/install.sh | sudo bash
 
     - name: Create AppDir structure
       run: |
@@ -67,7 +63,7 @@ jobs:
 
     - name: Download AppImageTool
       run: |
-        wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage"
+        wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
         chmod +x appimagetool
 
     - name: Create AppImage
