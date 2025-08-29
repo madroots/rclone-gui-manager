@@ -78,8 +78,8 @@ jobs:
           cp rclone-gui-manager.svg AppDir/
         fi
         
-        # Create the AppImage
-        ./appimagetool AppDir/
+        # Create the AppImage with specified architecture
+        ARCH=x86_64 ./appimagetool AppDir/
         
         # Rename AppImage with version info
         if [ -f "Rclone_GUI_Manager-x86_64.AppImage" ]; then
