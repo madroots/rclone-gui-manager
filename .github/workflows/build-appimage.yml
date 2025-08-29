@@ -32,8 +32,11 @@ jobs:
         ./python.AppImage --appimage-extract >/dev/null 2>&1
         
         # Create AppDir structure and move Python runtime
-        mkdir -p AppDir
-        mv squashfs-root/* AppDir/
+        mkdir -p AppDir/usr/bin
+        cp -r squashfs-root/usr/bin/* AppDir/usr/bin/
+        cp -r squashfs-root/usr/lib AppDir/usr/
+        cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
+        cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
 
     - name: Bundle application with Python
       run: |
@@ -43,9 +46,8 @@ jobs:
         
         # Create launcher script that uses bundled Python
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
-        echo 'HERE="$(dirname "$0")"' >> AppDir/usr/bin/rclone-gui-manager
-        echo 'export PYTHONPATH="$HERE:$PYTHONPATH"' >> AppDir/usr/bin/rclone-gui-manager
-        echo '"$HERE/python3.9" "$HERE/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
+        echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/rclone-gui-manager
+        echo '"$DIR/python3.9" "$DIR/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod 755 AppDir/usr/bin/rclone-gui-manager
         
         # Create desktop file in AppDir root (where appimagetool expects it)
