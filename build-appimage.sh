@@ -20,11 +20,13 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   cp -r squashfs-root/usr/lib AppDir/usr/ &&
   cp -r squashfs-root/usr/share AppDir/usr/ || echo \"No share directory to copy\" &&
   cp -r squashfs-root/opt AppDir/ || echo \"No opt directory to copy\" &&
+  # Remove the existing AppRun symlink
+  rm -f AppDir/AppRun &&
   cp /app/rclone-gui-manager.py AppDir/usr/bin/ &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager.py &&
   echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager &&
-  echo 'DIR=\"$(dirname \"$0\")\"' >> AppDir/usr/bin/rclone-gui-manager &&
-  echo '\"$DIR/python3.9\" \"$DIR/rclone-gui-manager.py\" \"$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo 'DIR=\"$(dirname \"\$0\")\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo '\"\$DIR/python3.9\" \"\$DIR/rclone-gui-manager.py\" \"\$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager &&
   echo '[Desktop Entry]' > AppDir/rclone-gui-manager.desktop &&
   echo 'Type=Application' >> AppDir/rclone-gui-manager.desktop &&
@@ -42,9 +44,10 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
     chmod 644 AppDir/rclone-gui-manager.svg &&
     chmod 644 AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
   fi &&
+  # Create AppRun script with proper permissions (overwrite any existing one)
   echo '#!/bin/bash' > AppDir/AppRun &&
-  echo 'HERE=\"$(dirname \"$(readlink -f \"$0\")\")\"' >> AppDir/AppRun &&
-  echo 'exec \"$HERE/usr/bin/rclone-gui-manager\" \"$@\"' >> AppDir/AppRun &&
+  echo 'HERE=\"$(dirname \"$(readlink -f \"\$0\")\")\"' >> AppDir/AppRun &&
+  echo 'exec \"\$HERE/usr/bin/rclone-gui-manager\" \"\$@\"' >> AppDir/AppRun &&
   chmod 755 AppDir/AppRun &&
   wget -O appimagetool \"https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage\" &&
   chmod +x appimagetool &&

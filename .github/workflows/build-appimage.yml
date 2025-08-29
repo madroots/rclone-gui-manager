@@ -37,6 +37,9 @@ jobs:
         cp -r squashfs-root/usr/lib AppDir/usr/
         cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
         cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
+        
+        # Remove the existing AppRun symlink and create our own
+        rm -f AppDir/AppRun
 
     - name: Bundle application with Python
       run: |
@@ -76,7 +79,7 @@ jobs:
           chmod 644 AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
         fi
         
-        # Create AppRun script with proper permissions
+        # Create AppRun script with proper permissions (overwrite any existing one)
         echo '#!/bin/bash' > AppDir/AppRun
         echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
         echo 'exec "$HERE/usr/bin/rclone-gui-manager" "$@"' >> AppDir/AppRun
