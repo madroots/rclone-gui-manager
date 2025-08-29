@@ -19,8 +19,6 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   mkdir -p AppDir/usr/share/applications &&
   mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps &&
   mv squashfs-root/* AppDir/ &&
-  ln -s usr/bin/python3.9 AppDir/usr/bin/python3 &&
-  ln -s usr/bin/python3.9 AppDir/usr/bin/python &&
   cp /app/rclone-gui-manager.py AppDir/usr/bin/ &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager.py &&
   echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager &&

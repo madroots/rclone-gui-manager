@@ -34,10 +34,6 @@ jobs:
         # Create AppDir structure and move Python runtime
         mkdir -p AppDir
         mv squashfs-root/* AppDir/
-        
-        # Link the Python executable to more convenient locations
-        ln -s usr/bin/python3.9 AppDir/usr/bin/python3
-        ln -s usr/bin/python3.9 AppDir/usr/bin/python
 
     - name: Bundle application with Python
       run: |
