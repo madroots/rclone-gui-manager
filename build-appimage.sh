@@ -22,8 +22,9 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   cp /app/rclone-gui-manager.py AppDir/usr/bin/ &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager.py &&
   echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager &&
-  echo 'HERE=\"$(dirname \"$(dirname \"$(readlink -f \"$0\")\")\")\"' >> AppDir/usr/bin/rclone-gui-manager &&
-  echo '\"$HERE/usr/bin/python3.9\" \"$HERE/usr/bin/rclone-gui-manager.py\" \"$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo 'HERE=\"\$(dirname \"\$0\")\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo 'export PYTHONPATH=\"\$HERE:\$PYTHONPATH\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo '\"\$HERE/python3.9\" \"\$HERE/rclone-gui-manager.py\" \"\$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager &&
   echo '[Desktop Entry]' > AppDir/rclone-gui-manager.desktop &&
   echo 'Type=Application' >> AppDir/rclone-gui-manager.desktop &&
@@ -42,8 +43,8 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
     chmod 644 AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
   fi &&
   echo '#!/bin/bash' > AppDir/AppRun &&
-  echo 'HERE=\"$(dirname \"$(readlink -f \"$0\")\")\"' >> AppDir/AppRun &&
-  echo 'exec \"$HERE/usr/bin/rclone-gui-manager\" \"$@\"' >> AppDir/AppRun &&
+  echo 'HERE=\"\$(dirname \"\$(readlink -f \"\$0\")\")\"' >> AppDir/AppRun &&
+  echo 'exec \"\$HERE/usr/bin/rclone-gui-manager\" \"\$@\"' >> AppDir/AppRun &&
   chmod 755 AppDir/AppRun &&
   wget -O appimagetool \"https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage\" &&
   chmod +x appimagetool &&
