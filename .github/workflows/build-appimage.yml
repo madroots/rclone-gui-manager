@@ -103,66 +103,12 @@ jobs:
         echo "Desktop file validation:"
         cat AppDir/rclone-gui-manager.desktop
 
-    - name: Validate AppDir
-      run: |
-        # Check if all required files exist
-        echo "Checking required files:"
-        if [ ! -f "AppDir/AppRun" ]; then
-          echo "ERROR: AppRun not found"
-          exit 1
-        fi
-        
-        if [ ! -f "AppDir/rclone-gui-manager.desktop" ]; then
-          echo "ERROR: Desktop file not found"
-          exit 1
-        fi
-        
-        if [ ! -f "AppDir/usr/bin/rclone-gui-manager" ]; then
-          echo "ERROR: Main executable not found"
-          exit 1
-        fi
-        
-        if [ ! -f "AppDir/rclone-gui-manager.svg" ]; then
-          echo "Warning: Icon not found, but continuing"
-        fi
-        
-        # Show permissions for verification
-        echo "File permissions:"
-        ls -lh AppDir/
-        ls -lh AppDir/usr/bin/
-        
-        # Validate desktop file
-        echo "Desktop file validation:"
-        cat AppDir/rclone-gui-manager.desktop
-
     - name: Download AppImageTool
       run: |
         wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage"
         chmod +x appimagetool
 
-    - name: Verify AppImage
-      run: |
-        # Check AppImage info
-        echo "AppImage information:"
-        ./rclone-gui-manager-x86_64.AppImage --appimage-version || echo "Version check failed"
-        echo ""
-        echo "AppImage info:"
-        ./rclone-gui-manager-x86_64.AppImage --appimage-info || echo "Info check failed"
-
-    - name: Verify AppImage
-      run: |
-        # Check AppImage info
-        echo "AppImage information:"
-        ./rclone-gui-manager-x86_64.AppImage --appimage-version || echo "Version check failed"
-        echo ""
-        echo "AppImage info:"
-        ./rclone-gui-manager-x86_64.AppImage --appimage-info || echo "Info check failed"
-
-    - name: Upload AppImage as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: rclone-gui-manager-appimage
-        path: rclone-gui-manager-x86_64.AppImage    - name: Create AppImage
+    - name: Create AppImage
       run: |
         # Create the AppImage with specified architecture
         echo "Creating AppImage..."
@@ -188,6 +134,7 @@ jobs:
         chmod +x rclone-gui-manager-x86_64.AppImage
         echo "AppImage created successfully:"
         ls -lh rclone-gui-manager-x86_64.AppImage
+
     - name: Verify AppImage
       run: |
         # Check AppImage info
@@ -209,4 +156,4 @@ jobs:
       with:
         files: rclone-gui-manager-x86_64.AppImage
       env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
