@@ -12,7 +12,7 @@ cd build
 docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   apt-get update && 
   apt-get install -y wget desktop-file-utils libfuse2 &&
-  wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage" &&
+  wget -O python.AppImage \"https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage\" &&
   chmod +x python.AppImage &&
   ./python.AppImage --appimage-extract >/dev/null 2>&1 &&
   mkdir -p AppDir/usr/bin &&
@@ -23,7 +23,7 @@ docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   chmod 755 AppDir/usr/bin/rclone-gui-manager.py &&
   echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager &&
   echo 'DIR=\"\$(dirname \"\$(readlink -f \"\$0\")\")\"' >> AppDir/usr/bin/rclone-gui-manager &&
-  echo '\"\$DIR/usr/bin/python3\" \"\$DIR/usr/bin/rclone-gui-manager.py\" \"\$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
+  echo '\"\$DIR/usr/bin/python3.9\" \"\$DIR/usr/bin/rclone-gui-manager.py\" \"\$@\"' >> AppDir/usr/bin/rclone-gui-manager &&
   chmod 755 AppDir/usr/bin/rclone-gui-manager &&
   echo '[Desktop Entry]' > AppDir/rclone-gui-manager.desktop &&
   echo 'Type=Application' >> AppDir/rclone-gui-manager.desktop &&
