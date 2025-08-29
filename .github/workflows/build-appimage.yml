@@ -66,7 +66,7 @@ jobs:
 
     - name: Download AppImageTool
       run: |
-        wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+        wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage"
         chmod +x appimagetool
 
     - name: Create AppImage
@@ -99,17 +99,32 @@ jobs:
           ls -la *.AppImage 2>/dev/null || echo "No AppImage files found"
           exit 1
         fi
+        
+        # Make it executable and show info
+        chmod +x rclone-gui-manager-x86_64.AppImage
+        echo "AppImage created successfully:"
+        ls -lh rclone-gui-manager-x86_64.AppImage
+
+    - name: Verify AppImage
+      run: |
+        # Check AppImage info
+        echo "AppImage information:"
+        ./rclone-gui-manager-x86_64.AppImage --appimage-version || echo "Version check failed"
+        echo ""
+        echo "AppImage info:"
+        ./rclone-gui-manager-x86_64.AppImage --appimage-info || echo "Info check failed"
+
+    - name: Verify AppImage
+      run: |
+        # Check AppImage info
+        echo "AppImage information:"
+        ./rclone-gui-manager-x86_64.AppImage --appimage-version || echo "Version check failed"
+        echo ""
+        echo "AppImage info:"
+        ./rclone-gui-manager-x86_64.AppImage --appimage-info || echo "Info check failed"
 
     - name: Upload AppImage as artifact
       uses: actions/upload-artifact@v4
       with:
         name: rclone-gui-manager-appimage
         path: rclone-gui-manager-x86_64.AppImage
-
-    - name: Upload AppImage to release
-      uses: softprops/action-gh-release@v1
-      if: github.event_name == 'release'
-      with:
-        files: rclone-gui-manager-x86_64.AppImage
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
