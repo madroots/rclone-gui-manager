@@ -23,7 +23,6 @@ jobs:
       run: |
         # Create AppDir structure
         mkdir -p AppDir/usr/bin
-        mkdir -p AppDir/usr/lib
         mkdir -p AppDir/usr/share/applications
         mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
         
@@ -34,21 +33,23 @@ jobs:
         # Create launcher script
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
         echo 'DIR="$(dirname "$(readlink -f "$0")")"' >> AppDir/usr/bin/rclone-gui-manager
-        echo 'export PYTHONPATH="$DIR/../lib/python3.8/site-packages:$PYTHONPATH"' >> AppDir/usr/bin/rclone-gui-manager
         echo 'python3 "$DIR/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod +x AppDir/usr/bin/rclone-gui-manager
         
-        # Create desktop file
-        echo '[Desktop Entry]' > AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Type=Application' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Name=Rclone GUI Manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Comment=Manage rclone remotes with a GUI' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Exec=rclone-gui-manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Icon=rclone-gui-manager' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Terminal=false' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
-        echo 'Categories=Utility;FileTools;' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
+        # Create desktop file in AppDir root (where appimagetool expects it)
+        echo '[Desktop Entry]' > AppDir/rclone-gui-manager.desktop
+        echo 'Type=Application' >> AppDir/rclone-gui-manager.desktop
+        echo 'Name=Rclone GUI Manager' >> AppDir/rclone-gui-manager.desktop
+        echo 'Comment=Manage rclone remotes with a GUI' >> AppDir/rclone-gui-manager.desktop
+        echo 'Exec=rclone-gui-manager' >> AppDir/rclone-gui-manager.desktop
+        echo 'Icon=rclone-gui-manager' >> AppDir/rclone-gui-manager.desktop
+        echo 'Terminal=false' >> AppDir/rclone-gui-manager.desktop
+        echo 'Categories=Utility;FileTools;' >> AppDir/rclone-gui-manager.desktop
         
-        # Copy icon files with correct names
+        # Also copy desktop file to standard location
+        cp AppDir/rclone-gui-manager.desktop AppDir/usr/share/applications/
+        
+        # Copy icon files
         if [ -f "rclone-gui-manager.svg" ]; then
           cp rclone-gui-manager.svg AppDir/rclone-gui-manager.svg
           cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
@@ -57,7 +58,6 @@ jobs:
         # Create AppRun script
         echo '#!/bin/bash' > AppDir/AppRun
         echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
-        echo 'export PYTHONPATH="$HERE/usr/lib/python3.8/site-packages:$PYTHONPATH"' >> AppDir/AppRun
         echo 'exec "$HERE/usr/bin/rclone-gui-manager" "$@"' >> AppDir/AppRun
         chmod +x AppDir/AppRun
 
