@@ -43,8 +43,8 @@ jobs:
         
         # Create launcher script that uses bundled Python
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
-        echo 'DIR="$(dirname "$(readlink -f "$0")")"' >> AppDir/usr/bin/rclone-gui-manager
-        echo '"$DIR/usr/bin/python3.9" "$DIR/usr/bin/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
+        echo 'HERE="$(dirname "$(dirname "$(readlink -f "$0")")")"' >> AppDir/usr/bin/rclone-gui-manager
+        echo '"$HERE/usr/bin/python3.9" "$HERE/usr/bin/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod 755 AppDir/usr/bin/rclone-gui-manager
         
         # Create desktop file in AppDir root (where appimagetool expects it)
