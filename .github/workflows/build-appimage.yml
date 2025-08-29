@@ -48,15 +48,10 @@ jobs:
         echo 'Terminal=false' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
         echo 'Categories=Utility;FileTools;' >> AppDir/usr/share/applications/rclone-gui-manager.desktop
         
-        # Create symbolic link for desktop file
-        ln -s usr/share/applications/rclone-gui-manager.desktop AppDir/rclone-gui-manager.desktop
-        
-        # Copy and symlink icon in multiple locations
+        # Copy icon files with correct names
         if [ -f "rclone-gui-manager.svg" ]; then
-          cp rclone-gui-manager.svg AppDir/
-          cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/
-          # Create symlink with the expected name
-          ln -s usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg AppDir/rclone-gui-manager.svg
+          cp rclone-gui-manager.svg AppDir/rclone-gui-manager.svg
+          cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
         fi
         
         # Create AppRun script
