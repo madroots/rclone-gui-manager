@@ -8,6 +8,9 @@ on:
   release:
     types: [ created, prereleased ]
 
+permissions:
+  contents: write
+
 jobs:
   build-appimage:
     runs-on: ubuntu-latest
@@ -104,12 +107,9 @@ jobs:
         path: rclone-gui-manager-x86_64.AppImage
 
     - name: Upload AppImage to release
+      uses: softprops/action-gh-release@v1
       if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+      with:
+        files: rclone-gui-manager-x86_64.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: rclone-gui-manager-x86_64.AppImage
-        asset_name: rclone-gui-manager-x86_64.AppImage
-        asset_content_type: application/octet-stream
