@@ -31,13 +31,12 @@ jobs:
         # Extract the Python AppImage to get the Python runtime
         ./python.AppImage --appimage-extract >/dev/null 2>&1
         
-        # Create AppDir structure with proper permissions
-        mkdir -p AppDir/usr/bin
+        # Create AppDir structure
         mkdir -p AppDir/usr/share/applications
         mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
         
         # Move the extracted Python runtime to AppDir
-        mv squashfs-root/usr AppDir/
+        mv squashfs-root/usr/* AppDir/usr/
         
         # Link the Python executable to a more convenient location
         ln -s usr/bin/python3.9 AppDir/usr/bin/python3
