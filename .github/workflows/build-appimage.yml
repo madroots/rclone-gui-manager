@@ -20,15 +20,31 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3 python3-tk python3-pip desktop-file-utils libfuse2
-
-    - name: Create AppDir structure
+        sudo apt-get install -y desktop-file-utils libfuse2
+        
+    - name: Download and extract Python AppImage
       run: |
+        # Download Python AppImage with tkinter support (Python 3.9 for compatibility)
+        wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.9-cp39-cp39-manylinux2014_x86_64.AppImage"
+        chmod +x python.AppImage
+        
+        # Extract the Python AppImage to get the Python runtime
+        ./python.AppImage --appimage-extract >/dev/null 2>&1
+        
         # Create AppDir structure with proper permissions
         mkdir -p AppDir/usr/bin
         mkdir -p AppDir/usr/share/applications
         mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
         
+        # Move the extracted Python runtime to AppDir
+        mv squashfs-root/usr AppDir/
+        
+        # Link the Python executable to a more convenient location
+        ln -s usr/bin/python3.9 AppDir/usr/bin/python3
+        ln -s usr/bin/python3.9 AppDir/usr/bin/python
+
+    - name: Bundle application with Python
+      run: |
         # Copy application files with explicit permissions
         cp rclone-gui-manager.py AppDir/usr/bin/
         chmod 755 AppDir/usr/bin/rclone-gui-manager.py
@@ -36,7 +52,7 @@ jobs:
         # Create launcher script
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
         echo 'DIR="$(dirname "$(readlink -f "$0")")"' >> AppDir/usr/bin/rclone-gui-manager
-        echo 'python3 "$DIR/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
+        echo '"$DIR/usr/bin/python3" "$DIR/usr/bin/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod 755 AppDir/usr/bin/rclone-gui-manager
         
         # Create desktop file in AppDir root (where appimagetool expects it)
@@ -87,6 +103,11 @@ jobs:
         
         if [ ! -f "AppDir/usr/bin/rclone-gui-manager" ]; then
           echo "ERROR: Main executable not found"
+          exit 1
+        fi
+        
+        if [ ! -f "AppDir/usr/bin/python3" ]; then
+          echo "ERROR: Python not found"
           exit 1
         fi
         
