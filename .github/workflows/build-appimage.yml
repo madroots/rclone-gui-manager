@@ -25,7 +25,7 @@ jobs:
     - name: Download and extract Python AppImage
       run: |
         # Download Python AppImage with tkinter support (Python 3.9 for compatibility)
-        wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.9-cp39-cp39-manylinux2014_x86_64.AppImage"
+        wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage"
         chmod +x python.AppImage
         
         # Extract the Python AppImage to get the Python runtime

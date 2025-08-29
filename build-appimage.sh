@@ -12,7 +12,7 @@ cd build
 docker run --rm -v "$(pwd)/..":/app -w /app ubuntu:20.04 bash -c "
   apt-get update && 
   apt-get install -y wget desktop-file-utils libfuse2 &&
-  wget -O python.AppImage \"https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.9-cp39-cp39-manylinux2014_x86_64.AppImage\" &&
+  wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage" &&
   chmod +x python.AppImage &&
   ./python.AppImage --appimage-extract >/dev/null 2>&1 &&
   mkdir -p AppDir/usr/bin &&
