@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 
-A simple, modern graphical user interface for managing [rclone](https://rclone.org) remotes. This tool allows you to easily mount and unmount your cloud storage remotes with a user-friendly interface.
+A simple and modern graphical user interface for managing [rclone](https://rclone.org) remotes. This tool allows you to easily mount and unmount your cloud storage remotes with a user-friendly interface.
 
 <img width="804" height="636" alt="image" src="https://github.com/user-attachments/assets/4e116675-5fdb-4971-9d3b-a661f773da6b" />
 
