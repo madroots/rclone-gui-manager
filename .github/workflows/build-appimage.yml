@@ -31,14 +31,11 @@ jobs:
         # Extract the Python AppImage to get the Python runtime
         ./python.AppImage --appimage-extract >/dev/null 2>&1
         
-        # Create AppDir structure
-        mkdir -p AppDir/usr/share/applications
-        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        # Create AppDir structure and move Python runtime
+        mkdir -p AppDir
+        mv squashfs-root/* AppDir/
         
-        # Move the extracted Python runtime to AppDir
-        mv squashfs-root/usr/* AppDir/usr/
-        
-        # Link the Python executable to a more convenient location
+        # Link the Python executable to more convenient locations
         ln -s usr/bin/python3.9 AppDir/usr/bin/python3
         ln -s usr/bin/python3.9 AppDir/usr/bin/python
 
@@ -48,7 +45,7 @@ jobs:
         cp rclone-gui-manager.py AppDir/usr/bin/
         chmod 755 AppDir/usr/bin/rclone-gui-manager.py
         
-        # Create launcher script
+        # Create launcher script that uses bundled Python
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
         echo 'DIR="$(dirname "$(readlink -f "$0")")"' >> AppDir/usr/bin/rclone-gui-manager
         echo '"$DIR/usr/bin/python3" "$DIR/usr/bin/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
@@ -65,7 +62,11 @@ jobs:
         echo 'Categories=Utility;FileTools;' >> AppDir/rclone-gui-manager.desktop
         chmod 644 AppDir/rclone-gui-manager.desktop
         
-        # Also copy desktop file to standard location
+        # Ensure proper directory structure for desktop file and icons
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        
+        # Copy desktop file to standard location
         cp AppDir/rclone-gui-manager.desktop AppDir/usr/share/applications/
         
         # Copy icon files with proper permissions
