@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ testing ]
   release:
-    types: [ created ]
+    types: [ created, prereleased ]
 
 jobs:
   build-appimage:
@@ -81,11 +81,20 @@ jobs:
         # Create the AppImage with specified architecture
         ARCH=x86_64 ./appimagetool AppDir/
         
-        # Rename AppImage with version info
+        # Rename AppImage with expected name if needed
         if [ -f "Rclone_GUI_Manager-x86_64.AppImage" ]; then
           mv Rclone_GUI_Manager-x86_64.AppImage rclone-gui-manager-x86_64.AppImage
-        elif [ -f "Rclone_GUI_Manager*.AppImage" ]; then
+        elif ls Rclone_GUI_Manager*.AppImage 1> /dev/null 2>&1; then
           mv Rclone_GUI_Manager*.AppImage rclone-gui-manager-x86_64.AppImage
+        elif ls *.AppImage 1> /dev/null 2>&1; then
+          mv *.AppImage rclone-gui-manager-x86_64.AppImage
+        fi
+        
+        # Verify the AppImage was created
+        if [ ! -f "rclone-gui-manager-x86_64.AppImage" ]; then
+          echo "Error: AppImage was not created successfully"
+          ls -la *.AppImage 2>/dev/null || echo "No AppImage files found"
+          exit 1
         fi
 
     - name: Upload AppImage as artifact
@@ -93,3 +102,14 @@ jobs:
       with:
         name: rclone-gui-manager-appimage
         path: rclone-gui-manager-x86_64.AppImage
+
+    - name: Upload AppImage to release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: rclone-gui-manager-x86_64.AppImage
+        asset_name: rclone-gui-manager-x86_64.AppImage
+        asset_content_type: application/octet-stream
