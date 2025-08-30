@@ -1,0 +1,8 @@
+#!/bin/bash
+# Launcher script for Rclone GUI Manager
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Run the main application
+python3 "$SCRIPT_DIR/rclone-gui-manager.py" "$@"
