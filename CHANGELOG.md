@@ -5,6 +5,7 @@
 - Add rclone installation detection
 - Add version display in UI
 - Add pencil icon for config path editing
+- Improved pencil icon styling
 
 ## v1.0.0
 - Initial release

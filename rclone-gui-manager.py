@@ -111,6 +111,12 @@ class RcloneManager:
                                
             # Update root background
             self.root.configure(bg='#2d2d2d')
+            
+            # Update icon colors for dark theme
+            if hasattr(self, 'config_icon'):
+                self.config_icon.config(bg='#2d2d2d', fg='#cccccc')
+                self.config_icon.bind("<Enter>", lambda e: self.config_icon.config(fg="#ffffff"))
+                self.config_icon.bind("<Leave>", lambda e: self.config_icon.config(fg="#cccccc"))
         else:
             # Light theme colors
             self.style.configure('TFrame', background='#f0f0f0')
@@ -132,6 +138,12 @@ class RcloneManager:
                                
             # Update root background
             self.root.configure(bg='#f0f0f0')
+            
+            # Update icon colors for light theme
+            if hasattr(self, 'config_icon'):
+                self.config_icon.config(bg='#f0f0f0', fg='#666666')
+                self.config_icon.bind("<Enter>", lambda e: self.config_icon.config(fg="#000000"))
+                self.config_icon.bind("<Leave>", lambda e: self.config_icon.config(fg="#666666"))
             
         # Update theme button text
         self.theme_btn.configure(text="☀️ Light Mode" if self.current_theme == 'dark' else "🌙 Dark Mode")
@@ -185,9 +197,12 @@ class RcloneManager:
         self.status_label = ttk.Label(self.status_frame, text="Ready", style='Status.TLabel')
         self.status_label.pack(side=tk.LEFT)
         
-        # Config edit button (pencil icon)
-        self.config_btn = ttk.Button(self.status_frame, text="✏️", command=self.edit_config_path, width=3)
-        self.config_btn.pack(side=tk.LEFT, padx=(5, 0))
+        # Config edit icon (pencil icon)
+        self.config_icon = tk.Label(self.status_frame, text="✏️", cursor="hand2", font=("Arial", 12), fg="#666666" if self.current_theme == 'light' else "#cccccc", bg='#f0f0f0' if self.current_theme == 'light' else '#2d2d2d')
+        self.config_icon.pack(side=tk.LEFT, padx=(5, 0))
+        self.config_icon.bind("<Button-1>", lambda e: self.edit_config_path())
+        self.config_icon.bind("<Enter>", lambda e: self.config_icon.config(fg="#000000" if self.current_theme == 'light' else "#ffffff"))
+        self.config_icon.bind("<Leave>", lambda e: self.config_icon.config(fg="#666666" if self.current_theme == 'light' else "#cccccc"))
         
         # Version label
         self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel')
