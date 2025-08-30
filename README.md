@@ -29,7 +29,10 @@ A simple and modern graphical user interface for managing [rclone](https://rclon
 - `mountpoint` command (available in most Linux distributions)
 - FUSE (for mounting functionality)
 
-## Installation
+## Run as AppImage
+Download appimage from release page.
+
+## Manual Installation
 
 ### 1. Install System Dependencies
 
@@ -153,6 +156,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for details on releases and changes.
 
 ## Acknowledgments
 
