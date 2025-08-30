@@ -2,9 +2,9 @@ name: Build AppImage
 
 on:
   push:
-    branches: [ testing ]
+    branches: [ dev ]
   pull_request:
-    branches: [ testing ]
+    branches: [ dev ]
   release:
     types: [ created, prereleased ]
 
@@ -24,36 +24,26 @@ jobs:
         
     - name: Download and extract Python AppImage
       run: |
-        # Download Python AppImage with tkinter support (Python 3.9 for compatibility)
         wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage"
         chmod +x python.AppImage
-        
-        # Extract the Python AppImage to get the Python runtime
         ./python.AppImage --appimage-extract >/dev/null 2>&1
-        
-        # Create AppDir structure and move Python runtime
         mkdir -p AppDir/usr/bin
         cp -r squashfs-root/usr/bin/* AppDir/usr/bin/
         cp -r squashfs-root/usr/lib AppDir/usr/
         cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
         cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
-        
-        # Remove the existing AppRun symlink and create our own
         rm -f AppDir/AppRun
 
     - name: Bundle application with Python
       run: |
-        # Copy application files with explicit permissions
         cp rclone-gui-manager.py AppDir/usr/bin/
         chmod 755 AppDir/usr/bin/rclone-gui-manager.py
         
-        # Create launcher script that uses bundled Python
         echo '#!/bin/bash' > AppDir/usr/bin/rclone-gui-manager
         echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/rclone-gui-manager
         echo '"$DIR/python3.9" "$DIR/rclone-gui-manager.py" "$@"' >> AppDir/usr/bin/rclone-gui-manager
         chmod 755 AppDir/usr/bin/rclone-gui-manager
         
-        # Create desktop file in AppDir root (where appimagetool expects it)
         echo '[Desktop Entry]' > AppDir/rclone-gui-manager.desktop
         echo 'Type=Application' >> AppDir/rclone-gui-manager.desktop
         echo 'Name=Rclone GUI Manager' >> AppDir/rclone-gui-manager.desktop
@@ -64,14 +54,11 @@ jobs:
         echo 'Categories=Utility;FileTools;' >> AppDir/rclone-gui-manager.desktop
         chmod 644 AppDir/rclone-gui-manager.desktop
         
-        # Ensure proper directory structure for desktop file and icons
         mkdir -p AppDir/usr/share/applications
         mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
         
-        # Copy desktop file to standard location
         cp AppDir/rclone-gui-manager.desktop AppDir/usr/share/applications/
         
-        # Copy icon files with proper permissions
         if [ -f "rclone-gui-manager.svg" ]; then
           cp rclone-gui-manager.svg AppDir/rclone-gui-manager.svg
           cp rclone-gui-manager.svg AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
@@ -79,19 +66,16 @@ jobs:
           chmod 644 AppDir/usr/share/icons/hicolor/256x256/apps/rclone-gui-manager.svg
         fi
         
-        # Create AppRun script with proper permissions (overwrite any existing one)
         echo '#!/bin/bash' > AppDir/AppRun
         echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
         echo 'exec "$HERE/usr/bin/rclone-gui-manager" "$@"' >> AppDir/AppRun
         chmod 755 AppDir/AppRun
         
-        # Show the structure for debugging
         echo "AppDir structure:"
         find AppDir -type f | sort
 
     - name: Validate AppDir
       run: |
-        # Check if all required files exist
         echo "Checking required files:"
         if [ ! -f "AppDir/AppRun" ]; then
           echo "ERROR: AppRun not found"
@@ -117,12 +101,10 @@ jobs:
           echo "Warning: Icon not found, but continuing"
         fi
         
-        # Show permissions for verification
         echo "File permissions:"
         ls -lh AppDir/
         ls -lh AppDir/usr/bin/
         
-        # Validate desktop file
         echo "Desktop file validation:"
         cat AppDir/rclone-gui-manager.desktop
 
@@ -133,11 +115,9 @@ jobs:
 
     - name: Create AppImage
       run: |
-        # Create the AppImage with specified architecture
         echo "Creating AppImage..."
         ARCH=x86_64 ./appimagetool AppDir/
         
-        # Rename AppImage with expected name if needed
         if [ -f "Rclone_GUI_Manager-x86_64.AppImage" ]; then
           mv Rclone_GUI_Manager-x86_64.AppImage rclone-gui-manager-x86_64.AppImage
         elif ls Rclone_GUI_Manager*.AppImage 1> /dev/null 2>&1; then
@@ -146,21 +126,18 @@ jobs:
           mv *.AppImage rclone-gui-manager-x86_64.AppImage
         fi
         
-        # Verify the AppImage was created
         if [ ! -f "rclone-gui-manager-x86_64.AppImage" ]; then
           echo "Error: AppImage was not created successfully"
           ls -la *.AppImage 2>/dev/null || echo "No AppImage files found"
           exit 1
         fi
         
-        # Make it executable and show info
         chmod +x rclone-gui-manager-x86_64.AppImage
         echo "AppImage created successfully:"
         ls -lh rclone-gui-manager-x86_64.AppImage
 
     - name: Verify AppImage
       run: |
-        # Check AppImage info
         echo "AppImage information:"
         ./rclone-gui-manager-x86_64.AppImage --appimage-version || echo "Version check failed"
         echo ""

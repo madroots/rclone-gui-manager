@@ -20,6 +20,8 @@ A simple and modern graphical user interface for managing [rclone](https://rclon
 - **Visual Indicators**: Green highlighting for mounted remotes for quick identification
 - **Folder Access**: Directly open mounted folders in your file manager
 - **System Integration**: Installs as a system application with menu entry
+- **Custom Config Path**: Locate your rclone.conf file anywhere on your system
+- **Rclone Detection**: Smart detection of rclone installation status
 
 ## Requirements
 

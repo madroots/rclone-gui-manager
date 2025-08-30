@@ -4,6 +4,9 @@ Rclone GUI Manager - Simplified Single File Version
 A simple GUI application for managing rclone remotes.
 """
 
+# Version
+VERSION = "1.0.1"
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import configparser
@@ -20,6 +23,9 @@ class RcloneManager:
         self.root.geometry("800x600")
         self.root.resizable(True, True)
         
+        # Application version
+        self.version = VERSION
+        
         # Load user preferences
         self.load_preferences()
         
@@ -34,6 +40,9 @@ class RcloneManager:
             self.current_theme = 'dark'
         else:
             self.current_theme = 'light'
+        
+        # Initialize config path
+        self.config_path = os.path.expanduser('~/.config/rclone/rclone.conf')
         
         # Load remotes
         self.load_remotes()
@@ -143,6 +152,21 @@ class RcloneManager:
                 self.tree.item(item_id, tags=('mounted',))
             else:
                 self.tree.item(item_id, tags=())
+                
+    def edit_config_path(self):
+        """Open file dialog to select rclone config file"""
+        from tkinter import filedialog
+        
+        # Open file dialog to select config file
+        new_path = filedialog.askopenfilename(
+            title="Select rclone config file",
+            initialdir=os.path.expanduser('~'),
+            filetypes=[("Config files", "*.conf"), ("All files", "*.*")]
+        )
+        
+        if new_path:
+            self.config_path = new_path
+            self.load_remotes()
             
     def create_widgets(self):
         # Main frame
@@ -153,9 +177,21 @@ class RcloneManager:
         self.header_label = ttk.Label(self.main_frame, text="Rclone Remote Manager", style='Header.TLabel')
         self.header_label.pack(anchor=tk.W, pady=(0, 20))
         
+        # Status frame
+        self.status_frame = ttk.Frame(self.main_frame)
+        self.status_frame.pack(fill=tk.X, pady=(0, 10))
+        
         # Status label
-        self.status_label = ttk.Label(self.main_frame, text="Ready", style='Status.TLabel')
-        self.status_label.pack(anchor=tk.W, pady=(0, 10))
+        self.status_label = ttk.Label(self.status_frame, text="Ready", style='Status.TLabel')
+        self.status_label.pack(side=tk.LEFT)
+        
+        # Config edit button (pencil icon)
+        self.config_btn = ttk.Button(self.status_frame, text="✏️", command=self.edit_config_path, width=3)
+        self.config_btn.pack(side=tk.LEFT, padx=(5, 0))
+        
+        # Version label
+        self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel')
+        self.version_label.pack(side=tk.RIGHT)
         
         # Treeview for remotes
         tree_frame = ttk.Frame(self.main_frame)
@@ -250,6 +286,15 @@ class RcloneManager:
                 
         self.style.configure('Status.TLabel', foreground=color)
         self.status_label.configure(text=message)
+        
+    def is_rclone_installed(self):
+        """Check if rclone is installed and accessible"""
+        try:
+            result = subprocess.run(['rclone', '--version'], 
+                                  capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired):
+            return False
             
     def show_progress(self, show=True):
         if show:
@@ -288,7 +333,6 @@ class RcloneManager:
     def load_remotes(self):
         """Load rclone remotes from config file"""
         self.show_progress(True)
-        self.show_status("Loading remotes...")
         
         # Store the currently selected remote name to reselect it after refresh
         selected_remote_name = None
@@ -303,16 +347,24 @@ class RcloneManager:
         for item in self.tree.get_children():
             self.tree.delete(item)
             
-        config_path = os.path.expanduser('~/.config/rclone/rclone.conf')
+        # Check if rclone is installed
+        rclone_installed = self.is_rclone_installed()
         
-        if not os.path.exists(config_path):
-            self.show_status("No rclone config found", 'error')
+        # Check if config file exists
+        config_exists = os.path.exists(self.config_path)
+        
+        if not config_exists:
+            if rclone_installed:
+                self.show_status("Rclone detected but no config found. Use pencil icon to locate rclone.conf", 'warning')
+            else:
+                self.show_status("Rclone not detected. Install it or locate rclone.conf manually", 'error')
             self.show_progress(False)
             return
             
+        # Config file exists
         config = configparser.ConfigParser()
         try:
-            config.read(config_path)
+            config.read(self.config_path)
         except Exception as e:
             self.show_status(f"Error reading config: {str(e)}", 'error')
             self.show_progress(False)
@@ -339,7 +391,12 @@ class RcloneManager:
             if selected_remote_name and remote[0] == selected_remote_name:
                 self.selected_item = item_id
                 
-        self.show_status(f"Loaded {len(remotes)} remotes", 'success')
+        # Show appropriate status message
+        if rclone_installed:
+            self.show_status(f"Loaded {len(remotes)} remotes", 'success')
+        else:
+            self.show_status(f"Rclone not detected but rclone.conf has been found and loaded {len(remotes)} remotes", 'warning')
+            
         self.show_progress(False)
         
         # Update treeview styles
