@@ -190,6 +190,11 @@ class RcloneManager:
         else:
             self.config_icon.config(fg="#666666")
             
+    def open_changelog(self):
+        """Open changelog in default web browser"""
+        import webbrowser
+        webbrowser.open("https://github.com/madroots/rclone-gui-manager/blob/main/CHANGELOG.md")
+            
     def create_widgets(self):
         # Main frame
         self.main_frame = ttk.Frame(self.root, padding="10")
@@ -215,8 +220,9 @@ class RcloneManager:
         self.config_icon.bind("<Leave>", self.on_icon_leave)
         
         # Version label
-        self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel')
+        self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel', cursor="hand2")
         self.version_label.pack(side=tk.RIGHT)
+        self.version_label.bind("<Button-1>", lambda e: self.open_changelog())
         
         # Treeview for remotes
         tree_frame = ttk.Frame(self.main_frame)
