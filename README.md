@@ -22,6 +22,7 @@ Download appimage from release page. App expects rclone to be present on your ma
 
 > [!CAUTION]  
 > **Do not use App Image Launcher**: Unfortunately, appimagelauncher has issues opening certain appimages, it seems its affecting new builds like mine. [Here](https://github.com/TheAssassin/AppImageLauncher/issues/656) and [here](https://github.com/TheAssassin/AppImageLauncher/issues/681) is more information.
+>
 > For an alternative launcher, you might look at [Gear Lever](https://github.com/mijorus/gearlever)
 
 ## Manual Installation
