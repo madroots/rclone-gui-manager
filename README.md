@@ -14,29 +14,26 @@ A simple and modern graphical user interface for managing [rclone](https://rclon
 - **One-Click Mounting**: Mount/unmount remotes with a single click
 - **Connection Testing**: Test remote connections before mounting to avoid errors
 - **Auto-Mount at Startup**: Automatically mount selected remotes at system startup via crontab integration
-- **Theme Support**: Toggle between light and dark themes for comfortable viewing
-- **Visual Feedback**: Clear status messages and progress indicators
 - **Smart Mount Points**: Automatically creates and manages mount points in user space (`~/mnt/[remote_name]`)
-- **Visual Indicators**: Green highlighting for mounted remotes for quick identification
 - **Folder Access**: Directly open mounted folders in your file manager
-- **System Integration**: Installs as a system application with menu entry
-- **Custom Config Path**: Locate your rclone.conf file anywhere on your system
-- **Rclone Detection**: Smart detection of rclone installation status
 
-## Requirements
+## Run as AppImage
+Download appimage from release page. App expects rclone to be present on your machine.
+
+> [!CAUTION]  
+> **Do not use App Image Launcher**: Unfortunately, appimagelauncher has issues opening certain appimages, it seems its affecting new builds like mine. [Here](https://github.com/TheAssassin/AppImageLauncher/issues/656) and [here](https://github.com/TheAssassin/AppImageLauncher/issues/681) is more information.
+>
+> For an alternative launcher, you might look at [Gear Lever](https://github.com/mijorus/gearlever)
+
+## Manual Installation
+
+### 1. Install System Dependencies
 
 - Python 3.6+
 - rclone
 - tkinter (usually included with Python)
 - `mountpoint` command (available in most Linux distributions)
 - FUSE (for mounting functionality)
-
-## Run as AppImage
-Download appimage from release page.
-
-## Manual Installation
-
-### 1. Install System Dependencies
 
 First, ensure you have rclone installed and configured:
 ```bash
