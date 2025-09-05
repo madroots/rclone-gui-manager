@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import json
+import threading
 from pathlib import Path
 
 class RcloneManager:
@@ -43,6 +44,10 @@ class RcloneManager:
         
         # Initialize config path
         self.config_path = os.path.expanduser('~/.config/rclone/rclone.conf')
+        
+        # Initialize process tracking variables
+        self.current_process = None
+        self.current_operation = None
         
         # Load remotes
         self.load_remotes()
@@ -99,6 +104,9 @@ class RcloneManager:
             
             # Button styling
             self.style.configure('TButton', background='#4d4d4d', foreground='white')
+            self.style.map('TButton',
+                          background=[('active', '#5d5d5d'), ('disabled', '#3d3d3d')],  # Darker when disabled
+                          foreground=[('active', 'white'), ('disabled', '#888888')])   # Gray when disabled
             
             # Treeview styling
             self.style.configure('Treeview', 
@@ -115,6 +123,8 @@ class RcloneManager:
             # Update icon colors for dark theme
             if hasattr(self, 'config_icon'):
                 self.config_icon.config(bg='#2d2d2d', fg='#cccccc')
+            if hasattr(self, 'settings_icon'):
+                self.settings_icon.config(bg='#2d2d2d', fg='#cccccc')
         else:
             # Light theme colors
             self.style.configure('TFrame', background='#f0f0f0')
@@ -124,6 +134,9 @@ class RcloneManager:
             
             # Button styling
             self.style.configure('TButton', background='#e1e1e1', foreground='black')
+            self.style.map('TButton',
+                          background=[('active', '#d1d1d1'), ('disabled', '#f0f0f0')],  # Lighter when disabled
+                          foreground=[('active', 'black'), ('disabled', '#888888')])   # Gray when disabled
             
             # Treeview styling
             self.style.configure('Treeview', 
@@ -140,6 +153,8 @@ class RcloneManager:
             # Update icon colors for light theme
             if hasattr(self, 'config_icon'):
                 self.config_icon.config(bg='#f0f0f0', fg='#666666')
+            if hasattr(self, 'settings_icon'):
+                self.settings_icon.config(bg='#f0f0f0', fg='#666666')
             
         # Update theme button text
         self.theme_btn.configure(text="☀️ Light Mode" if self.current_theme == 'dark' else "🌙 Dark Mode")
@@ -190,6 +205,20 @@ class RcloneManager:
         else:
             self.config_icon.config(fg="#666666")
             
+    def on_settings_enter(self, event):
+        """Handle mouse enter event for settings icon"""
+        if self.current_theme == 'dark':
+            self.settings_icon.config(fg="#ffffff")
+        else:
+            self.settings_icon.config(fg="#000000")
+            
+    def on_settings_leave(self, event):
+        """Handle mouse leave event for settings icon"""
+        if self.current_theme == 'dark':
+            self.settings_icon.config(fg="#cccccc")
+        else:
+            self.settings_icon.config(fg="#666666")
+            
     def open_changelog(self):
         """Open changelog in default web browser"""
         import webbrowser
@@ -200,9 +229,20 @@ class RcloneManager:
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Header
-        self.header_label = ttk.Label(self.main_frame, text="Rclone Remote Manager", style='Header.TLabel')
-        self.header_label.pack(anchor=tk.W, pady=(0, 20))
+        # Header frame
+        self.header_frame = ttk.Frame(self.main_frame)
+        self.header_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        # Header label
+        self.header_label = ttk.Label(self.header_frame, text="Rclone Remote Manager", style='Header.TLabel')
+        self.header_label.pack(side=tk.LEFT)
+        
+        # Gear icon for settings
+        self.settings_icon = tk.Label(self.header_frame, text="⚙️", cursor="hand2", font=("Arial", 16), fg="#666666", bg='#f0f0f0')
+        self.settings_icon.pack(side=tk.RIGHT)
+        self.settings_icon.bind("<Button-1>", lambda e: self.edit_config_path())
+        self.settings_icon.bind("<Enter>", self.on_settings_enter)
+        self.settings_icon.bind("<Leave>", self.on_settings_leave)
         
         # Status frame
         self.status_frame = ttk.Frame(self.main_frame)
@@ -211,13 +251,6 @@ class RcloneManager:
         # Status label
         self.status_label = ttk.Label(self.status_frame, text="Ready", style='Status.TLabel')
         self.status_label.pack(side=tk.LEFT)
-        
-        # Config edit icon (pencil icon)
-        self.config_icon = tk.Label(self.status_frame, text="✏️", cursor="hand2", font=("Arial", 12), fg="#666666", bg='#f0f0f0')
-        self.config_icon.pack(side=tk.LEFT, padx=(5, 0))
-        self.config_icon.bind("<Button-1>", lambda e: self.edit_config_path())
-        self.config_icon.bind("<Enter>", self.on_icon_enter)
-        self.config_icon.bind("<Leave>", self.on_icon_leave)
         
         # Version label
         self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel', cursor="hand2")
@@ -280,10 +313,6 @@ class RcloneManager:
         )
         self.cron_checkbox.pack(side=tk.LEFT)
         
-        # Progress bar
-        self.progress = ttk.Progressbar(self.main_frame, mode='indeterminate')
-        self.progress.pack(fill=tk.X, pady=(0, 10))
-        
         # Bind selection event
         self.tree.bind('<<TreeviewSelect>>', self.on_select)
         
@@ -318,6 +347,26 @@ class RcloneManager:
         self.style.configure('Status.TLabel', foreground=color)
         self.status_label.configure(text=message)
         
+        # Reset status message after 5 seconds for non-error messages
+        if status_type not in ['error']:
+            if hasattr(self, 'status_reset_id'):
+                self.root.after_cancel(self.status_reset_id)
+            self.status_reset_id = self.root.after(5000, self.reset_status_message)
+            
+    def reset_status_message(self):
+        """Reset the status message to the default state"""
+        # Cancel any pending resets
+        if hasattr(self, 'status_reset_id'):
+            self.root.after_cancel(self.status_reset_id)
+            delattr(self, 'status_reset_id')
+            
+        # Show the default status message based on the number of loaded remotes
+        if hasattr(self, 'tree'):
+            remote_count = len(self.tree.get_children())
+            self.show_status(f"Loaded {remote_count} remotes", 'success')
+        else:
+            self.show_status("Ready", 'normal')
+        
     def is_rclone_installed(self):
         """Check if rclone is installed and accessible"""
         try:
@@ -327,11 +376,10 @@ class RcloneManager:
         except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired):
             return False
             
-    def show_progress(self, show=True):
-        if show:
-            self.progress.start(10)
-        else:
-            self.progress.stop()
+    def show_progress(self, show=True, operation=""):
+        # This method is kept for compatibility but doesn't do anything
+        # since we removed the main progress bar
+        pass
             
     def get_mount_dir(self, remote_name):
         """Get mount directory for a remote"""
@@ -458,6 +506,9 @@ class RcloneManager:
             
         # Update button states based on selection
         self.update_button_states()
+        
+        # Update cron checkbox state based on crontab
+        self.update_cron_checkbox_state()
             
     def update_button_states(self):
         """Update button states based on selection and mount status"""
@@ -499,6 +550,15 @@ class RcloneManager:
                 self.unmount_btn.configure(state=tk.DISABLED)
             else:
                 self.unmount_btn.configure(state=tk.NORMAL)
+                
+    def update_cron_checkbox_state(self):
+        """Update the cron checkbox state based on whether the selected remote is in crontab"""
+        remote_name = self.get_selected_remote()
+        if remote_name:
+            self.cron_var.set(self.is_in_crontab(remote_name))
+        else:
+            # No selection, disable checkbox
+            self.cron_var.set(False)
             
     def get_selected_remote(self):
         """Get the selected remote name"""
@@ -539,16 +599,31 @@ class RcloneManager:
     def test_connection(self, remote_name):
         """Test connection to remote"""
         try:
-            result = subprocess.run(['rclone', 'lsf', f'{remote_name}:'], 
-                                  capture_output=True, text=True, timeout=30)
-            if result.returncode == 0:
+            # Store reference to the process for potential cancellation
+            self.current_process = subprocess.Popen(['rclone', 'lsf', f'{remote_name}:'], 
+                                                  stdout=subprocess.PIPE, 
+                                                  stderr=subprocess.PIPE, 
+                                                  text=True)
+            self.current_operation = "test"
+            
+            # Wait for completion
+            stdout, stderr = self.current_process.communicate(timeout=30)
+            
+            if self.current_process.returncode == 0:
                 return True, "Connection successful"
             else:
-                return False, f"Connection failed: {result.stderr}"
+                return False, f"Connection failed: {stderr}"
         except subprocess.TimeoutExpired:
+            # Kill the process if it timed out
+            if self.current_process:
+                self.current_process.kill()
             return False, "Connection test timed out"
         except Exception as e:
             return False, f"Connection test failed: {str(e)}"
+        finally:
+            # Clean up
+            self.current_process = None
+            self.current_operation = None
             
     def mount_remote(self, remote_name):
         """Mount remote"""
@@ -559,20 +634,21 @@ class RcloneManager:
             # Check if already mounted
             if self.is_mounted(mount_point):
                 return True, f"{remote_name} is already mounted at {mount_point}"
-                
+            
             # Mount command
             cmd = ['rclone', 'mount', '--vfs-cache-mode', 'writes', 
                   f'{remote_name}:', mount_point]
-                  
+            
             # Run mount in background
-            process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, 
+            self.current_process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, 
                                      stderr=subprocess.PIPE)
+            self.current_operation = "mount"
             
             # Give it a moment to see if it fails immediately
             try:
-                process.wait(timeout=2)
+                self.current_process.wait(timeout=2)
                 # If we get here, it failed to start
-                stderr = process.stderr.read().decode() if process.stderr else ""
+                stderr = self.current_process.stderr.read().decode() if self.current_process.stderr else ""
                 return False, f"Mount failed: {stderr}"
             except subprocess.TimeoutExpired:
                 # This is good - it means the mount is still running
@@ -582,6 +658,10 @@ class RcloneManager:
             
         except Exception as e:
             return False, f"Mount failed: {str(e)}"
+        finally:
+            # Clean up
+            self.current_process = None
+            self.current_operation = None
             
     def unmount_remote(self, remote_name):
         """Unmount remote"""
@@ -591,32 +671,53 @@ class RcloneManager:
             # Check if mounted
             if not self.is_mounted(mount_point):
                 return True, f"{remote_name} is not mounted"
-                
+            
             # Try fusermount first (Linux)
             try:
-                result = subprocess.run(['fusermount', '-u', mount_point], 
-                                      capture_output=True, text=True)
-                if result.returncode == 0:
+                self.current_process = subprocess.Popen(['fusermount', '-u', mount_point], 
+                                              stdout=subprocess.PIPE, 
+                                              stderr=subprocess.PIPE, 
+                                              text=True)
+                self.current_operation = "unmount"
+                
+                stdout, stderr = self.current_process.communicate()
+                
+                if self.current_process.returncode == 0:
                     return True, f"Successfully unmounted {remote_name}"
                 else:
                     # Try umount as fallback
-                    result = subprocess.run(['umount', mount_point], 
-                                          capture_output=True, text=True)
-                    if result.returncode == 0:
+                    self.current_process = subprocess.Popen(['umount', mount_point], 
+                                                  stdout=subprocess.PIPE, 
+                                                  stderr=subprocess.PIPE, 
+                                                  text=True)
+                    self.current_operation = "unmount"
+                    
+                    stdout, stderr = self.current_process.communicate()
+                    
+                    if self.current_process.returncode == 0:
                         return True, f"Successfully unmounted {remote_name}"
                     else:
-                        return False, f"Unmount failed: {result.stderr}"
+                        return False, f"Unmount failed: {stderr}"
             except FileNotFoundError:
                 # Try umount directly
-                result = subprocess.run(['umount', mount_point], 
-                                      capture_output=True, text=True)
-                if result.returncode == 0:
+                self.current_process = subprocess.Popen(['umount', mount_point], 
+                                              stdout=subprocess.PIPE, 
+                                              stderr=subprocess.PIPE, 
+                                              text=True)
+                self.current_operation = "unmount"
+                
+                stdout, stderr = self.current_process.communicate()
+                
+                if self.current_process.returncode == 0:
                     return True, f"Successfully unmounted {remote_name}"
                 else:
-                    return False, f"Unmount failed: {result.stderr}"
-                    
+                    return False, f"Unmount failed: {stderr}"
         except Exception as e:
             return False, f"Unmount failed: {str(e)}"
+        finally:
+            # Clean up
+            self.current_process = None
+            self.current_operation = None
             
     def test_selected(self):
         """Test connection to selected remote"""
@@ -625,11 +726,32 @@ class RcloneManager:
             messagebox.showwarning("Warning", "Please select a remote to test")
             return
             
-        self.show_progress(True)
-        self.show_status(f"Testing connection to {remote_name}...")
+        # Show popup immediately
+        self.show_operation_popup(f"Testing connection to {remote_name}")
         
-        success, message = self.test_connection(remote_name)
+        # Run the operation in a background thread
+        thread = threading.Thread(target=self._run_test_connection, args=(remote_name,))
+        thread.daemon = True
+        thread.start()
         
+    def _run_test_connection(self, remote_name):
+        """Run the test connection operation in a background thread"""
+        try:
+            success, message = self.test_connection(remote_name)
+            
+            # Update UI in the main thread
+            self.root.after(0, self._finish_test_connection, success, message)
+        except Exception as e:
+            self.root.after(0, self._finish_test_connection, False, f"Error: {str(e)}")
+            
+    def _finish_test_connection(self, success, message):
+        """Finish the test connection operation in the main thread"""
+        # Close popup if it exists
+        if hasattr(self, 'operation_popup') and self.operation_popup:
+            self.operation_popup.destroy()
+            self.operation_popup = None
+            
+        # Update main UI
         self.show_progress(False)
         if success:
             self.show_status(message, 'success')
@@ -645,21 +767,40 @@ class RcloneManager:
             messagebox.showwarning("Warning", "Please select a remote to mount")
             return
             
-        self.show_progress(True)
-        self.show_status(f"Mounting {remote_name}...")
+        # Show popup immediately
+        self.show_operation_popup(f"Mounting {remote_name}")
         
-        # Test connection first
-        success, message = self.test_connection(remote_name)
-        if not success:
-            self.show_progress(False)
-            self.show_status(message, 'error')
-            messagebox.showerror("Mount Failed", 
+        # Run the operation in a background thread
+        thread = threading.Thread(target=self._run_mount_remote, args=(remote_name,))
+        thread.daemon = True
+        thread.start()
+        
+    def _run_mount_remote(self, remote_name):
+        """Run the mount remote operation in a background thread"""
+        try:
+            # Test connection first
+            success, message = self.test_connection(remote_name)
+            if not success:
+                self.root.after(0, self._finish_mount_remote, False, 
                                f"Cannot mount {remote_name} - connection test failed:\n{message}")
-            return
+                return
+                
+            # Proceed with mount
+            success, message = self.mount_remote(remote_name)
             
-        # Proceed with mount
-        success, message = self.mount_remote(remote_name)
-        
+            # Update UI in the main thread
+            self.root.after(0, self._finish_mount_remote, success, message)
+        except Exception as e:
+            self.root.after(0, self._finish_mount_remote, False, f"Error: {str(e)}")
+            
+    def _finish_mount_remote(self, success, message):
+        """Finish the mount remote operation in the main thread"""
+        # Close popup if it exists
+        if hasattr(self, 'operation_popup') and self.operation_popup:
+            self.operation_popup.destroy()
+            self.operation_popup = None
+            
+        # Update main UI
         self.show_progress(False)
         if success:
             self.show_status(message, 'success')
@@ -676,11 +817,39 @@ class RcloneManager:
             messagebox.showwarning("Warning", "Please select a remote to unmount")
             return
             
-        self.show_progress(True)
-        self.show_status(f"Unmounting {remote_name}...")
+    def unmount_selected(self):
+        """Unmount selected remote"""
+        remote_name = self.get_selected_remote()
+        if not remote_name:
+            messagebox.showwarning("Warning", "Please select a remote to unmount")
+            return
+            
+        # Show popup immediately
+        self.show_operation_popup(f"Unmounting {remote_name}")
         
-        success, message = self.unmount_remote(remote_name)
+        # Run the operation in a background thread
+        thread = threading.Thread(target=self._run_unmount_remote, args=(remote_name,))
+        thread.daemon = True
+        thread.start()
         
+    def _run_unmount_remote(self, remote_name):
+        """Run the unmount remote operation in a background thread"""
+        try:
+            success, message = self.unmount_remote(remote_name)
+            
+            # Update UI in the main thread
+            self.root.after(0, self._finish_unmount_remote, success, message)
+        except Exception as e:
+            self.root.after(0, self._finish_unmount_remote, False, f"Error: {str(e)}")
+            
+    def _finish_unmount_remote(self, success, message):
+        """Finish the unmount remote operation in the main thread"""
+        # Close popup if it exists
+        if hasattr(self, 'operation_popup') and self.operation_popup:
+            self.operation_popup.destroy()
+            self.operation_popup = None
+            
+        # Update main UI
         self.show_progress(False)
         if success:
             self.show_status(message, 'success')
@@ -689,6 +858,80 @@ class RcloneManager:
         else:
             self.show_status(message, 'error')
             messagebox.showerror("Unmount Failed", message)
+            
+    def is_in_crontab(self, remote_name):
+        """Check if a remote is already in crontab"""
+        try:
+            # Get current crontab
+            result = subprocess.run(['crontab', '-l'], capture_output=True, text=True)
+            if result.returncode != 0:
+                return False
+                
+            current_cron = result.stdout
+            mount_cmd = f"rclone mount --vfs-cache-mode writes {remote_name}:"
+            return mount_cmd in current_cron
+        except Exception:
+            return False
+            
+    def kill_operation(self):
+        """Kill the currently running operation"""
+        if self.current_process and self.current_process.poll() is None:
+            # Process is still running
+            try:
+                self.current_process.kill()
+                self.current_process.wait(timeout=5)  # Wait for process to terminate
+                self.show_status("Operation killed by user", 'warning')
+                messagebox.showinfo("Operation Killed", "The operation has been terminated.")
+            except subprocess.TimeoutExpired:
+                # Process didn't terminate in time
+                self.show_status("Failed to kill operation", 'error')
+                messagebox.showerror("Kill Failed", "Failed to terminate the operation. It may still be running.")
+            except Exception as e:
+                self.show_status(f"Error killing operation: {str(e)}", 'error')
+                messagebox.showerror("Kill Error", f"An error occurred while trying to kill the operation: {str(e)}")
+        else:
+            self.show_status("No operation to kill", 'warning')
+            
+    def show_operation_popup(self, operation_name):
+        """Show a popup window for long-running operations with a kill button"""
+        # Create a new top-level window
+        self.popup = tk.Toplevel(self.root)
+        self.popup.title(f"{operation_name} in progress")
+        self.popup.geometry("300x150")
+        self.popup.resizable(False, False)
+        
+        # Apply theme to popup
+        if self.current_theme == 'dark':
+            self.popup.configure(bg='#2d2d2d')
+        else:
+            self.popup.configure(bg='#f0f0f0')
+        
+        # Center the popup window
+        self.popup.transient(self.root)
+        self.popup.grab_set()
+        
+        # Add label
+        label = ttk.Label(self.popup, text=f"{operation_name} in progress...", style='Status.TLabel')
+        label.pack(pady=20)
+        
+        # Add progress bar
+        progress = ttk.Progressbar(self.popup, mode='indeterminate')
+        progress.pack(fill=tk.X, padx=20, pady=10)
+        progress.start(10)
+        
+        # Add kill button
+        kill_btn = ttk.Button(self.popup, text="Kill Operation", command=self.kill_operation_from_popup)
+        kill_btn.pack(pady=10)
+        
+        # Store reference to popup
+        self.operation_popup = self.popup
+        
+    def kill_operation_from_popup(self):
+        """Kill the current operation from the popup window"""
+        self.kill_operation()
+        if hasattr(self, 'operation_popup') and self.operation_popup:
+            self.operation_popup.destroy()
+            self.operation_popup = None
             
     def toggle_cron(self):
         """Toggle cron entry for selected remote"""
@@ -699,6 +942,11 @@ class RcloneManager:
             return
             
         if self.cron_var.get():
+            # Check if already in crontab before adding
+            if self.is_in_crontab(remote_name):
+                self.show_status("Remote already in crontab", 'warning')
+                messagebox.showinfo("Info", f"Remote '{remote_name}' is already scheduled for auto-mount at startup.")
+                return
             self.add_to_cron(remote_name)
         else:
             self.remove_from_cron(remote_name)
@@ -714,6 +962,7 @@ class RcloneManager:
             mount_cmd = f"rclone mount --vfs-cache-mode writes {remote_name}:"
             if mount_cmd in current_cron:
                 self.show_status("Cron entry already exists", 'warning')
+                messagebox.showinfo("Info", f"Remote '{remote_name}' is already scheduled for auto-mount at startup.")
                 return
                 
             # Add new entry
