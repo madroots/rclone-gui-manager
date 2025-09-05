@@ -5,7 +5,7 @@
 
 A simple and modern graphical user interface for managing [rclone](https://rclone.org) remotes. This tool allows you to easily mount and unmount your cloud storage remotes with a user-friendly interface.
 
-<img width="804" height="636" alt="image" src="https://github.com/user-attachments/assets/4e116675-5fdb-4971-9d3b-a661f773da6b" />
+<img width="804" height="638" alt="image" src="https://github.com/user-attachments/assets/cc75c06f-6d5f-4d54-92ae-25f2fc9f686a" />
 
 
 ## Features
