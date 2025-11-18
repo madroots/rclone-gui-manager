@@ -15,7 +15,7 @@ import threading
 from pathlib import Path
 
 # Version - Update this manually for each release
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 class RcloneManager:
     def __init__(self, root):

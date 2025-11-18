@@ -1,11 +1,15 @@
 # Changelog
 
-## v1.0.5
+## v1.0.6
 - Add dedicated Cron column to remotes table
 - Move version display to bottom-right of main UI
 - Add settings window with theme and config path options
 - Improve update compatibility for Gear Lever
 - Fix cron indicator refresh issues
+- Fix Open Folder functionality after adding Cron column
+- Add version metadata to desktop file for Gear Lever
+
+## v1.0.5
 - Simplified version management (manual versioning)
 
 ## v1.0.4
