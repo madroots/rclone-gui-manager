@@ -954,6 +954,8 @@ class RcloneManager:
             if self.is_in_crontab(remote_name):
                 self.show_status("Remote already in crontab", 'warning')
                 messagebox.showinfo("Info", f"Remote '{remote_name}' is already scheduled for auto-mount at startup.")
+                # Update checkbox state to match actual status
+                self.update_cron_checkbox_state()
                 return
             self.add_to_cron(remote_name)
         else:
@@ -984,6 +986,8 @@ class RcloneManager:
             
             if process.returncode == 0:
                 self.show_status(f"Added {remote_name} to crontab for auto-mount", 'success')
+                # Refresh the remote list to show cron indicator
+                self.load_remotes()
             else:
                 self.cron_var.set(False)
                 self.show_status(f"Failed to add to crontab: {stderr.decode()}", 'error')
@@ -1016,6 +1020,8 @@ class RcloneManager:
             
             if process.returncode == 0:
                 self.show_status(f"Removed {remote_name} from crontab", 'success')
+                # Refresh the remote list to remove cron indicator
+                self.load_remotes()
             else:
                 self.show_status(f"Failed to remove from crontab: {stderr.decode()}", 'error')
                 
