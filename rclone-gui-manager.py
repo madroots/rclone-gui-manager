@@ -308,10 +308,18 @@ class RcloneManager:
             command=self.toggle_cron
         )
         self.cron_checkbox.pack(side=tk.LEFT)
-        
+
+        # Version frame at the bottom
+        self.version_frame = ttk.Frame(self.main_frame)
+        self.version_frame.pack(fill=tk.X, pady=(5, 0))
+
+        # Version label on the right side
+        self.version_label = ttk.Label(self.version_frame, text=f"v{self.version}", font=('Arial', 8))
+        self.version_label.pack(side=tk.RIGHT, padx=(0, 10))
+
         # Bind selection event
         self.tree.bind('<<TreeviewSelect>>', self.on_select)
-        
+
         # Initialize state
         self.selected_item = None
         
@@ -1083,12 +1091,6 @@ class RcloneManager:
         cancel_btn = ttk.Button(button_frame, text="Cancel", command=self.settings_window.destroy)
         cancel_btn.pack(side=tk.RIGHT)
 
-        # Version label at the bottom
-        version_frame = ttk.Frame(self.settings_window)
-        version_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
-
-        version_label = ttk.Label(version_frame, text=f"Rclone GUI Manager v{self.version}", font=('Arial', 10))
-        version_label.pack(side=tk.RIGHT)
 
     def browse_config_path(self):
         """Browse for rclone config file"""
