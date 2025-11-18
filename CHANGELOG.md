@@ -1,14 +1,17 @@
 # Changelog
 
-## v1.0.3
+## v1.0.5
 - Add dedicated Cron column to remotes table
 - Move version display to bottom-right of main UI
 - Add settings window with theme and config path options
 - Improve update compatibility for Gear Lever
 - Fix cron indicator refresh issues
-- Remove emoji from remote names to prevent cron entry corruption
+- Simplified version management (manual versioning)
 
-## v1.0.2
+## v1.0.4
+- Minor fixes and improvements
+
+## v1.0.3
 - Add kill option to end processes if they hang
 - Improve UX with popup windows for long-running operations
 - Move config edit icon from status bar to gear icon in header
@@ -16,12 +19,16 @@
 - Improve button styling in both light and dark themes
 - Fix cron checkbox to properly reflect crontab state
 
-## v1.0.1
+## v1.0.2
 - Add custom rclone config path selection
 - Add rclone installation detection
 - Add version display in UI
 - Add pencil icon for config path editing
 - Improved pencil icon styling
+
+## v1.0.1
+- Initial release
+- Core functionality for mounting/unmounting rclone remotes
 
 ## v1.0.0
 - Initial release
