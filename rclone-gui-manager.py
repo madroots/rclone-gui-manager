@@ -4,10 +4,6 @@ Rclone GUI Manager - Simplified Single File Version
 A simple GUI application for managing rclone remotes.
 """
 
-# Version
-VERSION = "1.0.3"
-# Added for update compatibility with Gear Lever and enhanced settings with cron fixes
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import configparser
@@ -17,6 +13,28 @@ import sys
 import json
 import threading
 from pathlib import Path
+
+def get_version():
+    """Get version from git tags or fallback to default"""
+    try:
+        # Get the latest git tag
+        result = subprocess.run(['git', 'describe', '--tags', '--abbrev=0'],
+                               capture_output=True, text=True,
+                               cwd=os.path.dirname(os.path.abspath(__file__)))
+        if result.returncode == 0:
+            tag = result.stdout.strip()
+            # Remove 'v' prefix if present
+            if tag.startswith('v'):
+                tag = tag[1:]
+            return tag
+    except (subprocess.SubprocessError, FileNotFoundError):
+        pass
+
+    # Fallback version if git is not available or no tags exist
+    return "1.0.3"
+
+# Version
+VERSION = get_version()
 
 class RcloneManager:
     def __init__(self, root):
