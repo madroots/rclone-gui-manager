@@ -241,9 +241,13 @@ class RcloneManager:
         # Gear icon for settings
         self.settings_icon = tk.Label(self.header_frame, text="⚙️", cursor="hand2", font=("Arial", 16), fg="#666666", bg='#f0f0f0')
         self.settings_icon.pack(side=tk.RIGHT)
-        self.settings_icon.bind("<Button-1>", lambda e: self.edit_config_path())
+        self.settings_icon.bind("<Button-1>", lambda e: self.open_settings_window())
         self.settings_icon.bind("<Enter>", self.on_settings_enter)
         self.settings_icon.bind("<Leave>", self.on_settings_leave)
+
+        # Remove the theme button from main UI and keep it in settings only
+        # self.theme_btn = ttk.Button(self.button_frame, text="🌙 Dark Mode", command=self.toggle_theme)
+        # self.theme_btn.pack(side=tk.RIGHT, padx=(5, 0))
         
         # Status frame
         self.status_frame = ttk.Frame(self.main_frame)
@@ -297,10 +301,7 @@ class RcloneManager:
         
         self.test_btn = ttk.Button(self.button_frame, text="Test Connection", command=self.test_selected)
         self.test_btn.pack(side=tk.LEFT, padx=(0, 5))
-        
-        self.theme_btn = ttk.Button(self.button_frame, text="🌙 Dark Mode", command=self.toggle_theme)
-        self.theme_btn.pack(side=tk.RIGHT, padx=(5, 0))
-        
+
         # Cron frame
         self.cron_frame = ttk.Frame(self.main_frame)
         self.cron_frame.pack(fill=tk.X, pady=(0, 10))
@@ -1014,6 +1015,104 @@ class RcloneManager:
                 
         except Exception as e:
             self.show_status(f"Cron operation failed: {str(e)}", 'error')
+
+    def open_settings_window(self):
+        """Open the settings window"""
+        # Create a new top-level window
+        self.settings_window = tk.Toplevel(self.root)
+        self.settings_window.title("Settings")
+        self.settings_window.geometry("400x300")
+        self.settings_window.resizable(False, False)
+
+        # Apply theme to settings window
+        if self.current_theme == 'dark':
+            self.settings_window.configure(bg='#2d2d2d')
+        else:
+            self.settings_window.configure(bg='#f0f0f0')
+
+        # Center the settings window
+        self.settings_window.transient(self.root)
+        self.settings_window.grab_set()
+
+        # Add label
+        label = ttk.Label(self.settings_window, text="Application Settings", font=('Arial', 14, 'bold'))
+        label.pack(pady=20)
+
+        # Theme selection frame
+        theme_frame = ttk.Frame(self.settings_window)
+        theme_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        ttk.Label(theme_frame, text="Theme:").pack(anchor=tk.W)
+
+        # Theme selection
+        self.theme_var = tk.StringVar(value="Dark" if self.current_theme == 'dark' else "Light")
+        theme_radio_frame = ttk.Frame(theme_frame)
+        theme_radio_frame.pack(fill=tk.X, pady=5)
+
+        ttk.Radiobutton(theme_radio_frame, text="Light", variable=self.theme_var, value="Light").pack(side=tk.LEFT)
+        ttk.Radiobutton(theme_radio_frame, text="Dark", variable=self.theme_var, value="Dark").pack(side=tk.LEFT, padx=(10, 0))
+
+        # Config path frame
+        config_frame = ttk.Frame(self.settings_window)
+        config_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        ttk.Label(config_frame, text="Rclone Config Path:").pack(anchor=tk.W)
+
+        # Config path entry
+        self.config_path_var = tk.StringVar(value=self.config_path)
+        config_entry_frame = ttk.Frame(config_frame)
+        config_entry_frame.pack(fill=tk.X, pady=5)
+
+        self.config_path_entry = ttk.Entry(config_entry_frame, textvariable=self.config_path_var)
+        self.config_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        config_path_btn = ttk.Button(config_entry_frame, text="Browse", command=self.browse_config_path)
+        config_path_btn.pack(side=tk.RIGHT, padx=(5, 0))
+
+        # Buttons frame
+        button_frame = ttk.Frame(self.settings_window)
+        button_frame.pack(fill=tk.X, padx=20, pady=20)
+
+        # OK and Cancel buttons
+        ok_btn = ttk.Button(button_frame, text="OK", command=self.save_settings)
+        ok_btn.pack(side=tk.RIGHT, padx=(5, 0))
+
+        cancel_btn = ttk.Button(button_frame, text="Cancel", command=self.settings_window.destroy)
+        cancel_btn.pack(side=tk.RIGHT)
+
+    def browse_config_path(self):
+        """Browse for rclone config file"""
+        from tkinter import filedialog
+
+        # Open file dialog to select config file
+        new_path = filedialog.askopenfilename(
+            title="Select rclone config file",
+            initialdir=os.path.expanduser('~'),
+            filetypes=[("Config files", "*.conf"), ("All files", "*.*")]
+        )
+
+        if new_path:
+            self.config_path_var.set(new_path)
+
+    def save_settings(self):
+        """Save settings and close window"""
+        # Update theme if changed
+        new_theme = self.theme_var.get().lower()
+        if new_theme != self.current_theme:
+            self.current_theme = new_theme
+            self.preferences['dark_mode'] = (new_theme == 'dark')
+            self.save_preferences()
+            self.apply_theme()
+            self.update_treeview_styles()
+
+        # Update config path if changed
+        new_config_path = self.config_path_var.get()
+        if new_config_path and new_config_path != self.config_path:
+            self.config_path = new_config_path
+            self.load_remotes()
+
+        # Close settings window
+        self.settings_window.destroy()
 
 
 def main():
