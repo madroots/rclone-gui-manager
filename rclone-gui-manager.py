@@ -6,7 +6,7 @@ A simple GUI application for managing rclone remotes.
 
 # Version
 VERSION = "1.0.2"
-# Added for update compatibility with Gear Lever and improved settings window
+# Added for update compatibility with Gear Lever and enhanced settings features
 
 import tkinter as tk
 from tkinter import ttk, messagebox
