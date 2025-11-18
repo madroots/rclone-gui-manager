@@ -6,6 +6,7 @@ A simple GUI application for managing rclone remotes.
 
 # Version
 VERSION = "1.0.2"
+# Added for update compatibility
 
 import tkinter as tk
 from tkinter import ttk, messagebox
