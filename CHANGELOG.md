@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.3
+- Added update information to AppImage for automatic updates
+
 ## v1.0.2
 - Add kill option to end processes if they hang
 - Improve UX with popup windows for long-running operations
