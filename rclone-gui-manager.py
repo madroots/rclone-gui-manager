@@ -255,22 +255,18 @@ class RcloneManager:
         self.status_label = ttk.Label(self.status_frame, text="Ready", style='Status.TLabel')
         self.status_label.pack(side=tk.LEFT)
         
-        # Version label
-        self.version_label = ttk.Label(self.status_frame, text=f"v{self.version}", style='Status.TLabel', cursor="hand2")
-        self.version_label.pack(side=tk.RIGHT)
-        self.version_label.bind("<Button-1>", lambda e: self.open_changelog())
         
         # Treeview for remotes
         tree_frame = ttk.Frame(self.main_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
-        columns = ('Remote', 'Type', 'Mounted', 'Mount Point')
+
+        columns = ('Remote', 'Type', 'Mounted', 'Cron', 'Mount Point')
         self.tree = ttk.Treeview(tree_frame, columns=columns, show='headings', height=15)
-        
+
         # Define headings
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=150, anchor='center')
+            self.tree.column(col, width=120, anchor='center')
         
         # Scrollbar
         scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
@@ -455,25 +451,20 @@ class RcloneManager:
             mount_point = str(self.get_mount_dir(section))
             is_mounted = self.is_mounted(mount_point)
             mounted_text = "Yes" if is_mounted else "No"
-            remotes.append((section, remote_type, mounted_text, mount_point))
+            # Check if remote has cron setup
+            has_cron = self.is_in_crontab(section)
+            cron_text = "Yes" if has_cron else "No"
+            remotes.append((section, remote_type, mounted_text, cron_text, mount_point))
             
         # Sort remotes by name
         remotes.sort(key=lambda x: x[0].lower())
         
         # Add to treeview
         for remote in remotes:
-            # Check if this remote has cron setup
-            has_cron = self.is_in_crontab(remote[0])  # remote[0] is the remote name
-            # Modify remote display to indicate cron status if needed
-            display_remote = list(remote)
-            if has_cron:
-                # Add visual indicator to remote name for cron-enabled remotes
-                display_remote[0] = f"{remote[0]} ⏰"  # Add clock emoji for cron-enabled remotes
-
-            # Apply 'mounted' tag if remote is mounted
+            # Apply 'mounted' tag if remote is mounted (index 2 is mounted column)
             is_mounted = remote[2] == "Yes"  # Check the "Mounted" column
             tags = ('mounted',) if is_mounted else ()
-            item_id = self.tree.insert('', tk.END, values=tuple(display_remote), tags=tags)
+            item_id = self.tree.insert('', tk.END, values=remote, tags=tags)
             # If this is the previously selected remote, store its new item ID
             if selected_remote_name and remote[0] == selected_remote_name:
                 self.selected_item = item_id
