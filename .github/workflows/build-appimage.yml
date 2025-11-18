@@ -52,6 +52,7 @@ jobs:
         echo 'Icon=rclone-gui-manager' >> AppDir/rclone-gui-manager.desktop
         echo 'Terminal=false' >> AppDir/rclone-gui-manager.desktop
         echo 'Categories=Utility;FileTools;' >> AppDir/rclone-gui-manager.desktop
+        echo 'X-AppImage-Version='$(echo ${GITHUB_REF##*/} | sed 's/v//') >> AppDir/rclone-gui-manager.desktop  # Extract version from tag
         chmod 644 AppDir/rclone-gui-manager.desktop
         
         mkdir -p AppDir/usr/share/applications
