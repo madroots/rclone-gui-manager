@@ -169,7 +169,7 @@ class RcloneManager:
         for item_id in self.tree.get_children():
             item = self.tree.item(item_id)
             values = item['values']
-            if len(values) > 2 and values[2] == "Yes":  # If mounted
+            if len(values) > 2 and values[2] == "Yes":  # Mounted column is at index 2
                 self.tree.item(item_id, tags=('mounted',))
             else:
                 self.tree.item(item_id, tags=())
@@ -541,8 +541,8 @@ class RcloneManager:
             return
         
         if len(values) > 2:
-            is_mounted = values[2] == "Yes"
-            
+            is_mounted = values[2] == "Yes"  # Mounted column is at index 2
+
             # Disable mount button if already mounted
             if is_mounted:
                 self.mount_btn.configure(state=tk.DISABLED)
@@ -550,7 +550,7 @@ class RcloneManager:
             else:
                 self.mount_btn.configure(state=tk.NORMAL)
                 self.open_btn.configure(state=tk.DISABLED)
-                
+
             # Disable unmount button if not mounted
             if not is_mounted:
                 self.unmount_btn.configure(state=tk.DISABLED)
@@ -581,15 +581,16 @@ class RcloneManager:
         """Open the mount folder for the selected remote"""
         if not self.selected_item:
             return
-            
+
         try:
             item = self.tree.item(self.selected_item)
             values = item['values']
         except:
             return
-        
-        if len(values) > 3:
-            mount_point = values[3]
+
+        # Column indices: 0=Remote, 1=Type, 2=Mounted, 3=Cron, 4=Mount Point
+        if len(values) > 4:
+            mount_point = values[4]  # Mount Point is now at index 4
             try:
                 # Try to open with xdg-open (Linux)
                 subprocess.run(['xdg-open', mount_point], check=True)
