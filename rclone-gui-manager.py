@@ -17,8 +17,8 @@ from pathlib import Path
 def get_version():
     """Get version from git tags or fallback to default"""
     try:
-        # Get the latest git tag
-        result = subprocess.run(['git', 'describe', '--tags', '--abbrev=0'],
+        # Try to get exact tag for current commit
+        result = subprocess.run(['git', 'describe', '--exact-match', '--tags', 'HEAD'],
                                capture_output=True, text=True,
                                cwd=os.path.dirname(os.path.abspath(__file__)))
         if result.returncode == 0:
@@ -27,6 +27,30 @@ def get_version():
             if tag.startswith('v'):
                 tag = tag[1:]
             return tag
+
+        # If current commit isn't tagged, get the latest tag with distance info
+        result = subprocess.run(['git', 'describe', '--tags'],
+                               capture_output=True, text=True,
+                               cwd=os.path.dirname(os.path.abspath(__file__)))
+        if result.returncode == 0:
+            tag_info = result.stdout.strip()
+            # Extract tag and add distance info
+            parts = tag_info.split('-')
+            if len(parts) >= 3:  # tag-<num_commits>-<hash>
+                base_tag = parts[0]
+                if base_tag.startswith('v'):
+                    base_tag = base_tag[1:]
+                return f"{base_tag}+dev"
+            elif len(parts) == 2:  # tag-<num_commits>
+                base_tag = parts[0]
+                if base_tag.startswith('v'):
+                    base_tag = base_tag[1:]
+                return f"{base_tag}+dev"
+            else:
+                tag = tag_info
+                if tag.startswith('v'):
+                    tag = tag[1:]
+                return tag
     except (subprocess.SubprocessError, FileNotFoundError):
         pass
 
