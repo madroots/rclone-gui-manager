@@ -462,10 +462,18 @@ class RcloneManager:
         
         # Add to treeview
         for remote in remotes:
+            # Check if this remote has cron setup
+            has_cron = self.is_in_crontab(remote[0])  # remote[0] is the remote name
+            # Modify remote display to indicate cron status if needed
+            display_remote = list(remote)
+            if has_cron:
+                # Add visual indicator to remote name for cron-enabled remotes
+                display_remote[0] = f"{remote[0]} ⏰"  # Add clock emoji for cron-enabled remotes
+
             # Apply 'mounted' tag if remote is mounted
             is_mounted = remote[2] == "Yes"  # Check the "Mounted" column
             tags = ('mounted',) if is_mounted else ()
-            item_id = self.tree.insert('', tk.END, values=remote, tags=tags)
+            item_id = self.tree.insert('', tk.END, values=tuple(display_remote), tags=tags)
             # If this is the previously selected remote, store its new item ID
             if selected_remote_name and remote[0] == selected_remote_name:
                 self.selected_item = item_id
@@ -1077,6 +1085,13 @@ class RcloneManager:
 
         cancel_btn = ttk.Button(button_frame, text="Cancel", command=self.settings_window.destroy)
         cancel_btn.pack(side=tk.RIGHT)
+
+        # Version label at the bottom
+        version_frame = ttk.Frame(self.settings_window)
+        version_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
+
+        version_label = ttk.Label(version_frame, text=f"Rclone GUI Manager v{self.version}", font=('Arial', 10))
+        version_label.pack(side=tk.RIGHT)
 
     def browse_config_path(self):
         """Browse for rclone config file"""
