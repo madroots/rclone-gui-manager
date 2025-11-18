@@ -157,8 +157,6 @@ class RcloneManager:
             if hasattr(self, 'settings_icon'):
                 self.settings_icon.config(bg='#f0f0f0', fg='#666666')
             
-        # Update theme button text
-        self.theme_btn.configure(text="☀️ Light Mode" if self.current_theme == 'dark' else "🌙 Dark Mode")
         
     def update_treeview_styles(self):
         """Update treeview row styles based on mount status and theme"""
@@ -1032,7 +1030,7 @@ class RcloneManager:
 
         # Center the settings window
         self.settings_window.transient(self.root)
-        self.settings_window.grab_set()
+        # self.settings_window.grab_set()  # Commenting out due to viewability issue
 
         # Add label
         label = ttk.Label(self.settings_window, text="Application Settings", font=('Arial', 14, 'bold'))
