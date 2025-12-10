@@ -146,6 +146,8 @@ Mounted remotes are highlighted in green (or dark green in dark mode) for easy i
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+For information on contributing, particularly on how to add new remote types through plugins, please see our [Contribution Guide](CONTRIBUTING.md).
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
